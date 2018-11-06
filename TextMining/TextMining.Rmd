@@ -134,9 +134,7 @@ contributions %>%
 #   facet_wrap(~method, ncol = 1, scales = "free_y") + ggtitle("Three Dictionaries Sentiment Analysis on Blog 1")
 ```
 
-To compare Dictionary Bing with two other dictionaries AFINN AND NRC, we used blog 1 as an example. 
 
-From the plot, we could see that the analysis using AFINN dictionary gives most negative results, the analysis using NRC dictionary gives mostly positive results, while the analysis using Bing gives a result balanced from positive and negative. 
 
 ##Most common positive and negative words
 ```{r,echo=FALSE,warning=FALSE,fig.width=10,fig.height=4}
@@ -158,7 +156,6 @@ bing_word_counts %>%
   coord_flip() + ggtitle("Most Common Positive and Negative Words in text1")
 ```
 
-The result of the most common positive and negative words in blog 2 is obvious. Since blog 2 is about gaming AI, the common positive words would be "win" and the common negative words would be "lose" or "die" with no doubt.
 
 
 #Word Cloud
@@ -175,7 +172,6 @@ text1 %>%
 ```
 
 
-The word cloud analysis also gives us a sense of what the blog is mainly about. Take blog 2 as an example. We can clearly see that the blog is about a gaming AI model. 
 
 ##Bigram sentiment Analysis
 
@@ -221,4 +217,3 @@ negation_words <- text11 %>%
 
 ```
 
-To take a further look at sentiment analysis, we took blog 2 to look at bigrams. Since the blog isn't very long, we can see from the plot that the bigram begining with "not" is mostly not winning, which is of course a negative bigram.
