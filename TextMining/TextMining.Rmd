@@ -1,6 +1,6 @@
 ---
 title: "Textmining"
-author: "Sky Liu"
+author: "Team3A - Sky Liu"
 date: "November 4, 2018"
 output: pdf_document
 ---
@@ -28,13 +28,13 @@ pacman::p_load(
 ```{r readtext,echo=TRUE,warning=FALSE}
 #get text from the blog
 #read text
-text1 <- read.table(file ="NAEC_Origins-of-the-Crisis_ENG.txt",header = FALSE,sep="\n")
 
 
-text2 <- pdf_text("2008 Housing crisis.pdf")
+
+text2 <- read.table(file ="2008 Housing crisis.txt",header = FALSE,sep="\n")
 text2 <- as.data.frame(text2)
 #THE SUBPRIME CRISIS AND HOUSE PRICE APPRECIATION 
-text3 <- read.table(file ="w15334.txt",header = FALSE,sep="\n")
+text1 <- read.table(file ="The Subprime Crisis and House Price Appreciation.txt",header = FALSE,sep="\n")
 ```
 
 ## GET A TIDY TEXT FORMAT & WORD COUNT
@@ -66,26 +66,26 @@ count(word, sort = TRUE)%>%
 
 
 #remove empty lines
-text3 <- text3 %>% filter(text3 != " ")
-text3 <- text3 %>% filter(text3 != "\f")
-colnames(text3) <- "text"
-line <- c(1:length(text3))
-text3 <- cbind(line,text3)
-text3$text<-as.character(text3$text)
+text2 <- text2 %>% filter(text2 != " ")
+text2 <- text2 %>% filter(text2 != "\f")
+colnames(text2) <- "text"
+line <- c(1:length(text2))
+text2 <- cbind(line,text2)
+text2$text<-as.character(text2$text)
 #a token per row
-text3 <-text3 %>%unnest_tokens(word,text)
+text2 <-text2 %>%unnest_tokens(word,text)
 #get rid of any non-characters
-text3 <- text3 %>%mutate(word = str_extract(word,"[a-z']+"))
-text3 <-na.omit(text3)
+text2 <- text2 %>%mutate(word = str_extract(word,"[a-z']+"))
+text2 <-na.omit(text2)
 #get rid of stop-words
-text3<- text3 %>% anti_join(stop_words)
+text2<- text2 %>% anti_join(stop_words)
 s<-stop_words
 #word count
-text3 %>%
+text2 %>%
 count(word, sort = TRUE)%>%
-  filter(n > 75) %>%
+  filter(n > 50) %>%
   mutate(word = reorder(word, n))%>%
-  ggplot(aes(word, n)) +geom_col() +xlab(NULL) +coord_flip() +ggtitle("Word Count for text 3")
+  ggplot(aes(word, n)) +geom_col() +xlab(NULL) +coord_flip() +ggtitle("Word Count for text 2")
 
 ```
 
@@ -94,82 +94,52 @@ count(word, sort = TRUE)%>%
 
 ```{r,echo=FALSE,warning=FALSE,fig.width=10,fig.height=5}
 #Comparing the word frequencies of text1 & text2
-# frequency <- bind_rows(mutate(text1, author = "Lisa"),
-#                        mutate(text2, author = "Johannes")) %>%
-#   count(author, word) %>%
-#   group_by(author) %>%
-#   mutate(proportion = n / sum(n)) %>% 
-#   select(-n) %>% 
-#   spread(author, proportion)
+frequency <- bind_rows(mutate(text2, author = "HC2018"),
+                       mutate(text1, author = "SC")) %>%
+  count(author, word) %>%
+  group_by(author) %>%
+  mutate(proportion = n / sum(n)) %>%
+  select(-n) %>%
+  spread(author, proportion)
 
-# expect a warning about rows with missing values being removed
-# ggplot(frequency, aes(x = Johannes, y =Lisa, color = abs(Lisa - Johannes))) +
-#   geom_abline(color = "gray40", lty = 2) +
-#   geom_jitter(alpha = 0.1, size = 2.5, width = 0.3, height = 0.3) +
-#   geom_text(aes(label = word), check_overlap = TRUE, vjust = 1.5) +
-#   scale_x_log10(labels = percent_format()) +
-#   scale_y_log10(labels = percent_format()) +
-#   scale_color_gradient(limits = c(0, 0.001), low = "darkslategray4", high = "gray75") +
-#   theme(legend.position="none") + ggtitle("Comparing Word frequencies")
+#expect a warning about rows with missing values being removed
+ggplot(frequency, aes(x = HC2018, y =SC, color = abs(SC - HC2018))) +
+  geom_abline(color = "gray40", lty = 2) +
+  geom_jitter(alpha = 0.1, size = 2.5, width = 0.3, height = 0.3) +
+  geom_text(aes(label = word), check_overlap = TRUE, vjust = 1.5) +
+  scale_x_log10(labels = percent_format()) +
+  scale_y_log10(labels = percent_format()) +
+  scale_color_gradient(limits = c(0, 0.001), low = "red", high = "blue") +
+  theme(legend.position="none") + ggtitle("Comparing Word frequencies")
 ```
 
 
+From this plot we can see that "mortgages" is frequently used in both papers. The differences is:
+"The Subprime Crisis and House Price Appreciation" focuses more on housing price appreciation while "The 2008 Housing Crisis" focuses more on federal/government policy.
 
-##Sentiment Analysis With Tidy Data
 
-```{r,echo=TRUE,warning=FALSE,,fig.width=10,fig.height=8}
 
-contributions <- text1 %>%
-  inner_join(get_sentiments("afinn"), by = "word") %>%
-  group_by(word) %>%
-  summarize(occurences = n(),
-            contribution = sum(score))
+##Word Cloud
 
-contributions %>%
-  top_n(15, abs(contribution)) %>%
-  mutate(word = reorder(word, contribution)) %>%
-  ggplot(aes(word, contribution, fill = contribution > 0)) +
-  geom_col(show.legend = FALSE) +
-  coord_flip()
-
+#Word Cloud of “Subprime Crisis”
+```{r,echo=TRUE,warning=FALSE,,fig.width=3,fig.height=3}
+text1 %>%
+  anti_join(stop_words) %>%
+  count(word) %>%
+  with(wordcloud(word, n, max.words = 100))
+```
+#Word Cloud of “Housing Crisis 2018”
+```{r}
+text2 %>%
+  anti_join(stop_words) %>%
+  count(word) %>%
+  with(wordcloud(word, n, max.words = 100))
 
 ```
 
+##Sentiment Analysis
 
-
-
-
-
-#Comparing the three sentiment dictionaries
-
-```{r,echo=FALSE,warning=FALSE,fig.width=10,fig.height=6}
-# #use text1 here as an example
-# afinn <- text1 %>% 
-#   inner_join(get_sentiments("afinn")) %>% 
-#   group_by(index = line %/% 2) %>% 
-#   summarise(sentiment = sum(score)) %>% 
-#   mutate(method = "AFINN")
-# bing_and_nrc <- bind_rows(text1 %>% 
-#                             inner_join(get_sentiments("bing")) %>%
-#                             mutate(method = "Bing et al."),
-#                           text1 %>% 
-#                             inner_join(get_sentiments("nrc") %>% 
-#                                          filter(sentiment %in% c("positive", 
-#                                                                  "negative"))) %>%
-#                             mutate(method = "NRC")) %>%
-#   count(method, index = line %/% 2, sentiment) %>%
-#   spread(sentiment, n, fill = 0) %>%
-#   mutate(sentiment = positive - negative)
-# bind_rows(afinn, 
-#           bing_and_nrc) %>%
-#   ggplot(aes(index, sentiment, fill = method)) +
-#   geom_col(show.legend = FALSE) +
-#   facet_wrap(~method, ncol = 1, scales = "free_y") + ggtitle("Three Dictionaries Sentiment Analysis on Blog 1")
-```
-
-
-
-##Most common positive and negative words
+#Most common positive and negative words
 ```{r,echo=TRUE,warning=FALSE,fig.width=10,fig.height=4}
 bing_word_counts <- text1 %>%
   inner_join(get_sentiments("bing")) %>%
@@ -185,19 +155,52 @@ bing_word_counts %>%
   facet_wrap(~sentiment, scales = "free_y") +
   labs(y = "Contribution to sentiment",
        x = NULL) +
-  coord_flip() + ggtitle("Most Common Positive and Negative Words in text1")
+  coord_flip() + ggtitle("Most Common Positive and Negative Words in Subprime Crisis")
+```
+
+#Sentiment Contribution 
+
+```{r,echo=TRUE,warning=FALSE,,fig.width=10,fig.height=8}
+
+contributions1 <- text1 %>%
+  inner_join(get_sentiments("afinn"), by = "word") %>%
+  group_by(word) %>%
+  summarize(occurences = n(),
+            contribution = sum(score))
+
+contributions1 %>%
+  top_n(15, abs(contribution)) %>%
+  mutate(word = reorder(word, contribution)) %>%
+  ggplot(aes(word, contribution, fill = contribution > 0)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() + ggtitle("Sentiment Analysis on Subprime Crisis ")
+
+contributions2 <- text2 %>%
+  inner_join(get_sentiments("afinn"), by = "word") %>%
+  group_by(word) %>%
+  summarize(occurences = n(),
+            contribution = sum(score))
+
+contributions2 %>%
+  top_n(15, abs(contribution)) %>%
+  mutate(word = reorder(word, contribution)) %>%
+  ggplot(aes(word, contribution, fill = contribution > 0)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() + ggtitle("Sentiment Analysis on HousingCrisis2018 ")
+
+
 ```
 
 
+Because "crisis" appears much more often in "HousingCrisis2018" than in "Subprime Crisis", it takes the most nagetive sentiment contribution in the paper, while in "Subprime Crisis", the effects of "risk" and "unemployment" are more dominant.
 
-#Word Cloud
-```{r,echo=TRUE,warning=FALSE,,fig.width=3,fig.height=3}
-text1 %>%
-  anti_join(stop_words) %>%
-  count(word) %>%
-  with(wordcloud(word, n, max.words = 100))
 
-```
+
+
+
+
+
+
 
 
 
@@ -205,7 +208,7 @@ text1 %>%
 
 ```{r,echo=TRUE,warning=FALSE,,fig.width=3,fig.height=3}
 #taking bigram and filtering out non character and OAs
-text11<-read.table(file ="NAEC_Origins-of-the-Crisis_ENG.txt",header = FALSE,sep="\n")
+text11<-read.table(file ="The Subprime Crisis and House Price Appreciation.txt",header = FALSE,sep="\n")
   
 text11 <- text11 %>% filter(V1 != " ")
 text11 <- text11 %>% filter(V1 != "\f")
