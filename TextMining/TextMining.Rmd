@@ -22,18 +22,23 @@ pacman::p_load(
   "tm"
 )
 ```
-##SCRAPING DATA FROM https://correlaid.org/blog/
 
+##READ TEXT FILE
 
-```{r readtext,echo=FALSE,warning=FALSE}
+```{r readtext,echo=TRUE,warning=FALSE}
 #get text from the blog
 #read text
 text1 <- read.table(file ="NAEC_Origins-of-the-Crisis_ENG.txt",header = FALSE,sep="\n")
 
+
+text2 <- pdf_text("2008 Housing crisis.pdf")
+text2 <- as.data.frame(text2)
+#THE SUBPRIME CRISIS AND HOUSE PRICE APPRECIATION 
+text3 <- read.table(file ="w15334.txt",header = FALSE,sep="\n")
 ```
 
 ## GET A TIDY TEXT FORMAT & WORD COUNT
-```{r,echo=FALSE,warning=FALSE,results='hide',fig.width=5,fig.height=3}
+```{r,echo=TRUE,warning=FALSE,results='hide',fig.width=5,fig.height=3}
 
 #remove empty lines
 text1 <- text1 %>% filter(V1 != " ")
@@ -56,6 +61,31 @@ count(word, sort = TRUE)%>%
   filter(n > 75) %>%
   mutate(word = reorder(word, n))%>%
   ggplot(aes(word, n)) +geom_col() +xlab(NULL) +coord_flip() +ggtitle("Word Count for text 1")
+
+
+
+
+#remove empty lines
+text3 <- text3 %>% filter(text3 != " ")
+text3 <- text3 %>% filter(text3 != "\f")
+colnames(text3) <- "text"
+line <- c(1:length(text3))
+text3 <- cbind(line,text3)
+text3$text<-as.character(text3$text)
+#a token per row
+text3 <-text3 %>%unnest_tokens(word,text)
+#get rid of any non-characters
+text3 <- text3 %>%mutate(word = str_extract(word,"[a-z']+"))
+text3 <-na.omit(text3)
+#get rid of stop-words
+text3<- text3 %>% anti_join(stop_words)
+s<-stop_words
+#word count
+text3 %>%
+count(word, sort = TRUE)%>%
+  filter(n > 75) %>%
+  mutate(word = reorder(word, n))%>%
+  ggplot(aes(word, n)) +geom_col() +xlab(NULL) +coord_flip() +ggtitle("Word Count for text 3")
 
 ```
 
@@ -87,7 +117,7 @@ count(word, sort = TRUE)%>%
 
 ##Sentiment Analysis With Tidy Data
 
-```{r,echo=FALSE,warning=FALSE,,fig.width=10,fig.height=8}
+```{r,echo=TRUE,warning=FALSE,,fig.width=10,fig.height=8}
 
 contributions <- text1 %>%
   inner_join(get_sentiments("afinn"), by = "word") %>%
@@ -101,7 +131,10 @@ contributions %>%
   ggplot(aes(word, contribution, fill = contribution > 0)) +
   geom_col(show.legend = FALSE) +
   coord_flip()
+
+
 ```
+
 
 
 
@@ -137,8 +170,7 @@ contributions %>%
 
 
 ##Most common positive and negative words
-```{r,echo=FALSE,warning=FALSE,fig.width=10,fig.height=4}
-#use text2 here as an example
+```{r,echo=TRUE,warning=FALSE,fig.width=10,fig.height=4}
 bing_word_counts <- text1 %>%
   inner_join(get_sentiments("bing")) %>%
   count(word, sentiment, sort = TRUE) %>%
@@ -159,11 +191,7 @@ bing_word_counts %>%
 
 
 #Word Cloud
-```{r,echo=FALSE,warning=FALSE,,fig.width=3,fig.height=3}
-#text1 %>%
-#  anti_join(stop_words) %>%
-#  count(word) %>%
-#  with(wordcloud(word, n, max.words = 100)) 
+```{r,echo=TRUE,warning=FALSE,,fig.width=3,fig.height=3}
 text1 %>%
   anti_join(stop_words) %>%
   count(word) %>%
@@ -175,7 +203,7 @@ text1 %>%
 
 ##Bigram sentiment Analysis
 
-```{r,echo=FALSE,warning=FALSE,,fig.width=3,fig.height=3}
+```{r,echo=TRUE,warning=FALSE,,fig.width=3,fig.height=3}
 #taking bigram and filtering out non character and OAs
 text11<-read.table(file ="NAEC_Origins-of-the-Crisis_ENG.txt",header = FALSE,sep="\n")
   
@@ -195,7 +223,7 @@ text11<- text11%>%unnest_tokens(bigram, text, token = "ngrams", n = 2)%>%
 
 negation_words <- c("not", "no", "never", "without","don't")
 
-#filter out bigrams starts with not
+#filter out bigrams starts with negation words
 negation_words <- text11 %>%
   filter(word1 %in% negation_words) %>%
   inner_join(get_sentiments("afinn"), by = c(word2 = "word")) %>%
@@ -203,7 +231,7 @@ negation_words <- text11 %>%
   ungroup()
 
 
-#plot not words
+#plot negation words
  negation_words %>%
   mutate(contribution = n * score) %>%
   arrange(desc(abs(contribution))) %>%
